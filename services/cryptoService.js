@@ -33,7 +33,11 @@ const setCachedData = (key, data) => {
         .slice(0, 3)
         .forEach(item => localStorage.removeItem(item.key));
       // Повторить попытку
-      try { localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data })); } catch {}
+      try {
+        localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+      } catch {
+        // ignore if storage is still full
+      }
     }
   }
 };
