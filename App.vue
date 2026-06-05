@@ -24,7 +24,7 @@
     <ErrorAlert 
       v-else-if="error" 
       :message="error" 
-      @retry="refresh" 
+      :on-retry="refresh" 
     />
     
     <div v-else-if="filteredCoins.length" class="coins-grid">
