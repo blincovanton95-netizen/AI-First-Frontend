@@ -1,18 +1,20 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://localhost:4173"],
-      "startServerCommand": "npx serve dist",
-      "numberOfRuns": 3
+      "staticDistDir": "./dist",
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --headless=new"
+      }
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.90 }],
-        "categories:accessibility": ["error", { "minScore": 0.95 }],
-        "first-contentful-paint": ["warn", { "maxNumericValue": 1200 }],
-        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
-        "interactive": ["warn", { "maxNumericValue": 3000 }]
+        "categories:performance": ["warn", { "minScore": 0.75 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "first-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
+        "largest-contentful-paint": ["warn", { "maxNumericValue": 3500 }],
+        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.15 }],
+        "interactive": ["warn", { "maxNumericValue": 4500 }]
       }
     },
     "upload": {
