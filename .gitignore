@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local env (secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs & caches
+*.log
+npm-debug.log*
+.vite/
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test / coverage
+coverage/
+
+# Bundle analysis
+stats.html
