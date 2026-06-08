@@ -2,51 +2,70 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪙</text></svg>" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="CryptoTracker — мониторинг топ-10 криптовалют в реальном времени" />
-  
-  <!-- 🔹 CLS: Критический CSS в <head> для мгновенной отрисовки до загрузки JS -->
+
   <style>
-    /* Базовый фон и сброс отступов */
     :root { --ds-bg-page: #f8fafc; --ds-bg-surface: #ffffff; }
     body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--ds-bg-page); color: #0f172a; }
-    
-    /* Резервирование пространства под LCP-контейнер → 0 сдвигов при гидратации */
-    #app { 
-      min-height: 100vh; 
-      max-width: 1200px; 
-      margin: 0 auto; 
+
+    #app {
+      min-height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
       padding: 2rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
-    /* Скелетон-заглушка показывается мгновенно */
-    .app-skeleton {
-      width: 100%;
-      height: 420px;
-      background: var(--ds-bg-surface);
+
+    .app-skeleton-header {
+      height: 2.5rem;
+      width: 60%;
+      border-radius: 8px;
+      background: #e2e8f0;
+    }
+    .app-skeleton-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      min-height: 880px;
+    }
+    .app-skeleton-card {
+      min-height: 96px;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background: var(--ds-bg-surface);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
       animation: pulse 1.5s ease-in-out infinite;
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-    
-    /* Шрифты без сдвига текста */
-    @font-face { font-display: swap; }
   </style>
 
-  <!-- 🔹 LCP: Предподключение к внешним ресурсам -->
+  <!-- Раннее соединение с API и CDN изображений -->
   <link rel="preconnect" href="https://api.coingecko.com" crossorigin />
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  
+  <link rel="preconnect" href="https://coin-images.coingecko.com" crossorigin />
+  <link rel="dns-prefetch" href="https://assets.coingecko.com" />
+
+  <!-- Preload: JSON API параллельно с загрузкой JS (тот же URL, что в cryptoService.js) -->
+  <link
+    rel="preload"
+    href="https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&amp;order=market_cap_desc&amp;per_page=10&amp;page=1&amp;sparkline=false"
+    as="fetch"
+    crossorigin
+  />
+
   <title>CryptoTracker | Дашборд криптовалют</title>
 </head>
 <body>
   <div id="app">
-    <!-- Скелетон рендерится браузером мгновенно, пока Vite грузит JS/CSS -->
-    <div class="app-skeleton" aria-hidden="true" role="status" aria-label="Загрузка приложения"></div>
+    <div class="app-skeleton-header" aria-hidden="true"></div>
+    <div class="app-skeleton-grid" aria-hidden="true" role="status" aria-label="Загрузка приложения">
+      <div class="app-skeleton-card"></div>
+      <div class="app-skeleton-card"></div>
+      <div class="app-skeleton-card"></div>
+      <div class="app-skeleton-card"></div>
+    </div>
   </div>
   <script type="module" src="./main.js"></script>
 </body>

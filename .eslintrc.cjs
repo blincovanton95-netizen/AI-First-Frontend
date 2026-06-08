@@ -18,5 +18,5 @@ module.exports = {
     'vue/attributes-order': 'off',
     'no-console': 'off',
   },
-  ignorePatterns: ['dist', 'node_modules', 'import.meta.env'],
+  ignorePatterns: ['dist', 'dist-analyze', 'node_modules', 'import.meta.env'],
 }

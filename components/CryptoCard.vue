@@ -1,30 +1,34 @@
 <template>
   <article class="crypto-card" :aria-label="`${coin.name} (${coin.symbol.toUpperCase()})`">
     <div class="card-media">
-      <img 
-        v-if="!imageError" 
-        :src="coin.image" 
-        :alt="`${coin.name} logo`" 
-        class="coin-image" 
+      <img
+        v-if="!imageError"
+        :src="coin.image"
+        :alt="`${coin.name} logo`"
+        class="coin-image"
+        width="48"
+        height="48"
+        decoding="async"
+        :loading="priority ? 'eager' : 'lazy'"
+        :fetchpriority="priority ? 'high' : 'auto'"
         @error="handleImageError"
-        loading="lazy"
       />
       <div v-else class="coin-placeholder" :aria-hidden="true">
         {{ coin.symbol.toUpperCase().slice(0, 2) }}
       </div>
     </div>
-    
+
     <div class="card-content">
       <header class="card-header">
         <h3 class="coin-name">{{ coin.name }}</h3>
         <span class="coin-symbol">{{ coin.symbol.toUpperCase() }}</span>
       </header>
-      
+
       <div class="coin-price">
         <span class="price-value">{{ formattedPrice }}</span>
-        <span 
-          v-if="coin.price_change_percentage_24h !== null" 
-          class="price-change" 
+        <span
+          v-if="coin.price_change_percentage_24h !== null"
+          class="price-change"
           :class="coin.price_change_percentage_24h >= 0 ? 'positive' : 'negative'"
         >
           {{ coin.price_change_percentage_24h >= 0 ? '↑' : '↓' }}
@@ -32,15 +36,15 @@
         </span>
         <span v-else class="price-change neutral">—</span>
       </div>
-      
+
       <p class="market-cap">
         Капитализация: {{ formatMarketCap(coin.market_cap) }}
       </p>
-      
+
       <footer class="card-footer">
-        <a 
-          :href="`https://www.coingecko.com/ru/монеты/${coin.id}`" 
-          target="_blank" 
+        <a
+          :href="`https://www.coingecko.com/ru/монеты/${coin.id}`"
+          target="_blank"
           rel="noopener noreferrer"
           class="details-link"
         >
@@ -52,29 +56,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   coin: {
     type: Object,
     required: true,
-    validator: (c) => c.id && c.name && c.symbol && c.current_price !== undefined
-  }
+    validator: (c) => c.id && c.name && c.symbol && c.current_price !== undefined,
+  },
+  priority: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const imageError = ref(false)
 
-const handleImageError = () => {
-  imageError.value = true
-  console.warn(`[CryptoCard] Не удалось загрузить изображение для ${props.coin.name}`)
-}
-
-const formattedPrice = new Intl.NumberFormat('ru-RU', {
+const priceFormatter = new Intl.NumberFormat('ru-RU', {
   style: 'currency',
   currency: 'USD',
   minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-}).format(props.coin.current_price)
+  maximumFractionDigits: 2,
+})
+
+const formattedPrice = computed(() => priceFormatter.format(props.coin.current_price))
+
+const handleImageError = () => {
+  imageError.value = true
+}
 
 const formatMarketCap = (value) => {
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)} трлн $`
@@ -89,6 +98,7 @@ const formatMarketCap = (value) => {
   display: flex;
   gap: 1rem;
   padding: 1rem;
+  min-height: 96px;
   background: var(--ds-bg-surface, #fff);
   border: 1px solid var(--ds-border, #e2e8f0);
   border-radius: var(--ds-radius-lg, 0.75rem);
@@ -100,6 +110,8 @@ const formatMarketCap = (value) => {
 }
 .card-media {
   flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,7 +200,6 @@ const formatMarketCap = (value) => {
   border-radius: 4px;
 }
 
-/* Mobile: вертикальный лейаут */
 @media (max-width: 480px) {
   .crypto-card {
     flex-direction: column;
