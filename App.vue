@@ -50,6 +50,8 @@
       <button type="button" class="retry-inline" @click="refresh">Повторить</button>
     </p>
   </main>
+
+  <ChatWidget />
 </template>
 
 <script setup>
@@ -57,6 +59,7 @@ import { defineAsyncComponent } from 'vue'
 import { useCryptoData } from '@/composables/useCryptoData'
 import Loader from '@/components/Loader.vue'
 import ErrorAlert from '@/components/ErrorAlert.vue'
+import ChatWidget from '@/components/ChatWidget.vue'
 
 const CryptoCard = defineAsyncComponent(() => import('@/components/CryptoCard.vue'))
 

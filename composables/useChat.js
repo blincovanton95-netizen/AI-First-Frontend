@@ -22,8 +22,10 @@ export function useChat() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
-      while (true) {
+      let streamDone = false;
+      while (!streamDone) {
         const { done, value } = await reader.read();
+        streamDone = done;
         if (done) break;
 
         const chunk = decoder.decode(value);
