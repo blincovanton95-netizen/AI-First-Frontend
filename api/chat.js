@@ -1,16 +1,28 @@
 import { getMockResponse } from '../mock/responses.js';
 
-// ⚙️ Конфигурация
 const MOCK_DELAY_MS = parseInt(process.env.MOCK_DELAY_MS || '30');
 
-// 🧹 Sanitization: защита от prompt injection
+// 🧠 SYSTEM PROMPT — невидимое сообщение, задающее роль ассистента
+const SYSTEM_PROMPT = `Ты — AI-ассистент образовательной платформы "CodeHub" (CryptoTracker).
+Твоя специализация: криптовалюты, блокчейн, Web3, DeFi, NFT, безопасность крипто-активов.
+
+Правила поведения:
+- Отвечай кратко, по делу, на русском языке
+- Используй Markdown для форматирования (**жирный**, списки, заголовки)
+- Если вопрос не по теме — вежливо верни пользователя к крипто-тематике
+- Не давай финансовых советов, только образовательную информацию
+- Будь дружелюбным, но профессиональным`;
+
+// 🧹 Sanitization
 const sanitizeMessage = (text) => {
   const dangerousPatterns = [
     /ignore previous instructions/gi,
     /disregard all prior/gi,
     /forget everything above/gi,
     /you are now/gi,
-    /system prompt/gi
+    /system prompt/gi,
+    /act as/gi,
+    /pretend you are/gi
   ];
   let sanitized = text;
   dangerousPatterns.forEach(pattern => {
@@ -23,7 +35,7 @@ const sanitizeMessage = (text) => {
 const validateChatRequest = (body) => {
   const errors = [];
   if (!body.message || typeof body.message !== 'string') {
-    errors.push('Поле "message" обязательно и должно быть строкой');
+    errors.push('Поле "message" обязательно');
   } else if (body.message.length > 2000) {
     errors.push('Сообщение не должно превышать 2000 символов');
   }
@@ -35,11 +47,17 @@ const validateChatRequest = (body) => {
   return errors;
 };
 
-// 🎭 MOCK: Генерация "токенов" из ответа с задержкой
+// 🎭 MOCK: Генерация потока с учётом истории и system prompt
 async function* generateMockStream(message, history) {
-  const response = getMockResponse(message, history);
+  // 🔹 В реальной OpenAI-версии здесь бы формировался массив messages:
+  // [
+  //   { role: 'system', content: SYSTEM_PROMPT },
+  //   ...history,
+  //   { role: 'user', content: message }
+  // ]
+  // Для мока передаём system prompt как контекст в getMockResponse
   
-  // Разбиваем ответ на "токены" (слова + знаки препинания)
+  const response = getMockResponse(message, history, SYSTEM_PROMPT);
   const tokens = response.match(/\S+\s*|[.,!?;:]+\s*/g) || [response];
   
   for (const token of tokens) {
@@ -72,14 +90,11 @@ async function* generateMockStream(message, history) {
   };
 }
 
-// 🎯 Vercel Serverless Function handler
 export default async function handler(req, res) {
-  // Разрешаем только POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Валидация
   const validationErrors = validateChatRequest(req.body);
   if (validationErrors.length > 0) {
     return res.status(400).json({ error: 'Невалидный запрос', details: validationErrors });
@@ -88,31 +103,32 @@ export default async function handler(req, res) {
   const { message, history = [] } = req.body;
   const sanitizedMessage = sanitizeMessage(message);
 
-  console.log(`💬 User: ${sanitizedMessage.substring(0, 100)}`);
+  // 🔒 Санитизация истории (защита от инъекций через старые сообщения)
+  const sanitizedHistory = history.map(msg => ({
+    role: msg.role === 'user' ? 'user' : 'assistant',
+    content: sanitizeMessage(String(msg.content || '').substring(0, 1000))
+  }));
+
+  console.log(`💬 User: ${sanitizedMessage.substring(0, 80)}... | History: ${sanitizedHistory.length} msgs`);
 
   try {
-    // 🔧 Установка SSE-заголовков
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
-    // 📤 Потоковая передача мок-чанков
-    const stream = generateMockStream(sanitizedMessage, history);
+    const stream = generateMockStream(sanitizedMessage, sanitizedHistory);
     
     for await (const chunk of stream) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     }
 
-    // ✅ Завершение потока
     res.write('data: [DONE]\n\n');
     res.end();
-    
-    console.log('✅ Response streamed successfully');
 
   } catch (error) {
-    console.error('❌ Mock stream error:', error.message);
+    console.error('❌ Stream error:', error.message);
     
     if (!res.headersSent) {
       return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
@@ -123,14 +139,10 @@ export default async function handler(req, res) {
   }
 }
 
-// ⚙️ Конфигурация Vercel Serverless Function
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '50kb',
-    },
+    bodyParser: { sizeLimit: '50kb' },
     responseLimit: false,
   },
-  // Максимальное время выполнения: 10 секунд (Hobby plan)
   maxDuration: 10,
 };
