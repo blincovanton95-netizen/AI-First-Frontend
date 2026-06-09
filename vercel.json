@@ -1,8 +1,8 @@
 {
-  "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci || npm install",
+  "framework": "vite",
+  
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -14,16 +14,7 @@
       ]
     },
     {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -31,5 +22,19 @@
         }
       ]
     }
-  ]
+  ],
+  
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  
+  "functions": {
+    "api/chat.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
